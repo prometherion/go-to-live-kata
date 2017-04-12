@@ -1,0 +1,65 @@
+version: '2'
+
+services:
+    #
+    # Web Server
+    #
+    nginx:
+        build:
+            context: ./nginx
+        depends_on:
+            - php-fpm
+            - workspace
+        volumes:
+            - gotolive:/var/www
+        ports:
+            - "80:80"
+        networks:
+            - gotolive
+    #
+    # CGI interpreter
+    #
+    php-fpm:
+        build:
+            context: ./php-fpm
+        volumes:
+            - gotolive:/var/www
+        environment:
+            - MAX_UPLOAD_SIZE=10M
+        networks:
+            - gotolive
+    #
+    # Workspace for volume sharing across webserver and CGI interpreter
+    #
+    workspace:
+        build:
+            context: ./workspace
+            args:
+                - WP_VERSION=4.7.1
+        volumes:
+            - gotolive:/var/www
+        networks:
+            - gotolive
+    #
+    # Database (optional: you can use DBaaS such as Amazon Aurora, Amazon RDS, Google Cloud SQL and so on)
+    #
+    database:
+        build:
+            context: ./database
+        environment:
+            - MYSQL_DATABASE=wordpress
+            - MYSQL_USER=wordpress
+            - MYSQL_PASSWORD=w0rdpr355
+            - MYSQL_CHARSET=utf8
+            - MYSQL_COLLATION=utf8_unicode_ci
+        networks:
+            - gotolive
+        volumes:
+            - database:/var/lib/mysql
+
+volumes:
+    gotolive:
+    database:
+
+networks:
+    gotolive:
